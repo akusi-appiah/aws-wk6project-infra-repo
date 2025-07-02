@@ -83,6 +83,27 @@ Resources:
       LogGroupName: !Sub /ecs/${ECSAppName}
       RetentionInDays: 14
 
+  AutoScalingTarget:
+    Type: AWS::ApplicationAutoScaling::ScalingTarget
+    Properties:
+      MaxCapacity: 10
+      MinCapacity: 2
+      ResourceId: !Sub service/${ECSCluster}/${ECSService.Name}
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+  AutoScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: ScaleOnCPU
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref AutoScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70.0
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 300
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+
 Outputs:
   ECSClusterName:
     Value: !Ref ECSCluster
