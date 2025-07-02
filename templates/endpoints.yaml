@@ -1,0 +1,49 @@
+Parameters:
+  VpcId: { Type: String }
+  PrivateRouteTableId: { Type: String }
+  EndpointSecurityGroup: { Type: String }
+
+Resources:
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcId: !Ref VpcId
+      RouteTableIds: [!Ref PrivateRouteTableId]
+      VpcEndpointType: Gateway
+
+  ECRDockerEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
+      VpcId: !Ref VpcId
+      SecurityGroupIds: [!Ref EndpointSecurityGroup]
+      SubnetIds: !Split [',', !GetAtt VPCStack.Outputs.PrivateSubnets]
+      PrivateDnsEnabled: true
+
+  ECRApiEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
+      VpcId: !Ref VpcId
+      SecurityGroupIds: [!Ref EndpointSecurityGroup]
+      SubnetIds: !Split [',', !GetAtt VPCStack.Outputs.PrivateSubnets]
+      PrivateDnsEnabled: true
+
+  CloudWatchLogsEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
+      VpcId: !Ref VpcId
+      SecurityGroupIds: [!Ref EndpointSecurityGroup]
+      SubnetIds: !Split [',', !GetAtt VPCStack.Outputs.PrivateSubnets]
+      PrivateDnsEnabled: true
+
+  SecretsManagerEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.secretsmanager
+      VpcId: !Ref VpcId
+      SecurityGroupIds: [!Ref EndpointSecurityGroup]
+      SubnetIds: !Split [',', !GetAtt VPCStack.Outputs.PrivateSubnets]
+      PrivateDnsEnabled: true

@@ -1,0 +1,93 @@
+Parameters:
+  ECSAppName: { Type: String }
+  ContainerPort: { Type: Number }
+  PrivateSubnetIds: { Type: CommaDelimitedList }
+  TaskSecurityGroup: { Type: String }
+  TaskExecutionRoleArn: { Type: String }
+  S3BucketName: { Type: String }
+  DBEndpoint: { Type: String }
+  DBSecretArn: { Type: String }
+  BlueTargetGroupArn: { Type: String }
+
+Resources:
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref ECSAppName
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref ECSAppName
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ECSAppName}-task
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      Cpu: '512'
+      Memory: '1024'
+      ExecutionRoleArn: !Ref TaskExecutionRoleArn
+      ContainerDefinitions:
+        - Name: !Ref ECSAppName
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:latest
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+          Environment:
+            - Name: S3_BUCKET
+              Value: !Ref S3BucketName
+            - Name: DB_HOST
+              Value: !Ref DBEndpoint
+            - Name: DB_SECRET_ARN
+              Value: !Ref DBSecretArn
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref AppLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub ${ECSAppName}-service
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: 2
+      DeploymentController:
+        Type: CODE_DEPLOY
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: !Ref PrivateSubnetIds
+          SecurityGroups: [!Ref TaskSecurityGroup]
+          AssignPublicIp: DISABLED
+      LoadBalancers:
+        - ContainerName: !Ref ECSAppName
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref BlueTargetGroupArn
+
+  AppLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${ECSAppName}
+      RetentionInDays: 14
+
+Outputs:
+  ECSClusterName:
+    Value: !Ref ECSCluster
+  ECSServiceName:
+    Value: !GetAtt ECSService.Name
+  ECRRepoName:
+    Value: !Ref ECRRepository
+  ECRRepoURI:
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}
+  ECRRepoArn:
+    Value: !GetAtt ECRRepository.Arn

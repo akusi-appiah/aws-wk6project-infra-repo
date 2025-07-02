@@ -1,0 +1,45 @@
+Parameters:
+  ECSAppName: { Type: String }
+  ECSClusterName: { Type: String }
+  ECSServiceName: { Type: String }
+  BlueTargetGroupName: { Type: String }
+  GreenTargetGroupName: { Type: String }
+  AlbListenerArn: { Type: String }
+
+Resources:
+  CodeDeployApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: !Ref ECSAppName
+      ComputePlatform: ECS
+
+  CodeDeployDeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      ApplicationName: !Ref CodeDeployApplication
+      DeploymentGroupName: !Sub ${ECSAppName}-dg
+      ServiceRoleArn: !GetAtt IAMStack.Outputs.CodeDeployRoleArn
+      DeploymentStyle:
+        DeploymentType: BLUE_GREEN
+        DeploymentOption: WITH_TRAFFIC_CONTROL
+      BlueGreenDeploymentConfiguration:
+        TerminateBlueInstancesOnDeploymentSuccess:
+          Action: TERMINATE
+          TerminationWaitTimeInMinutes: 5
+        DeploymentReadyOption:
+          ActionOnTimeout: CONTINUE_DEPLOYMENT
+          WaitTimeInMinutes: 0
+      LoadBalancerInfo:
+        TargetGroupPairInfoList:
+          - TargetGroups:
+              - Name: !Ref BlueTargetGroupName
+              - Name: !Ref GreenTargetGroupName
+            ProdTrafficRoute:
+              ListenerArns: [!Ref AlbListenerArn]
+      EcsServices:
+        - ClusterName: !Ref ECSClusterName
+          ServiceName: !Ref ECSServiceName
+
+Outputs:
+  DeploymentGroupName:
+    Value: !Ref CodeDeployDeploymentGroup

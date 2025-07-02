@@ -1,0 +1,150 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Master template for image gallery infrastructure'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: 'prod'
+    
+  VpcCidr:
+    Type: String
+    Default: '10.0.0.0/16'
+    
+  PublicSubnetCIDRs:
+    Type: CommaDelimitedList
+    Default: '10.0.1.0/24,10.0.2.0/24'
+    
+  PrivateSubnetCIDRs:
+    Type: CommaDelimitedList
+    Default: '10.0.101.0/24,10.0.102.0/24'
+    
+  AvailabilityZones:
+    Type: CommaDelimitedList
+    Default: 'eu-west-1a,eu-west-1b'
+    
+  ContainerPort:
+    Type: Number
+    Default: 3000
+    
+  ECSAppName:
+    Type: String
+    Default: 'igallery-app'
+
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: templates/vpc.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        VpcCidr: !Ref VpcCidr
+        PublicSubnetCIDRs: !Join [',', !Ref PublicSubnetCIDRs]
+        PrivateSubnetCIDRs: !Join [',', !Ref PrivateSubnetCIDRs]
+        AvailabilityZones: !Join [',', !Ref AvailabilityZones]
+
+  SecurityStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: templates/security-groups.yaml
+      Parameters:
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        ContainerPort: !Ref ContainerPort
+
+  EndpointsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: templates/endpoints.yaml
+      Parameters:
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateRouteTableId: !GetAtt VPCStack.Outputs.PrivateRouteTableId
+        EndpointSecurityGroup: !GetAtt SecurityStack.Outputs.EndpointSecurityGroup
+
+  RDSStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: templates/rds.yaml
+      Parameters:
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnets
+        DBSecurityGroup: !GetAtt SecurityStack.Outputs.DBSecurityGroup
+        EnvironmentName: !Ref EnvironmentName
+
+  S3Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: templates/s3.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+
+  ALBStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: templates/alb.yaml
+      Parameters:
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PublicSubnetIds: !GetAtt VPCStack.Outputs.PublicSubnets
+        ContainerPort: !Ref ContainerPort
+        ECSAppName: !Ref ECSAppName
+        AlbSecurityGroup: !GetAtt SecurityStack.Outputs.AlbSecurityGroup
+
+  IAMStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: templates/iam.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        S3BucketArn: !GetAtt S3Stack.Outputs.S3BucketArn
+        DBSecretArn: !GetAtt RDSStack.Outputs.DBSecretArn
+
+  ECSStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: templates/ecs.yaml
+      Parameters:
+        ECSAppName: !Ref ECSAppName
+        ContainerPort: !Ref ContainerPort
+        PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnets
+        TaskSecurityGroup: !GetAtt SecurityStack.Outputs.TaskSecurityGroup
+        TaskExecutionRoleArn: !GetAtt IAMStack.Outputs.TaskExecutionRoleArn
+        S3BucketName: !GetAtt S3Stack.Outputs.S3BucketName
+        DBEndpoint: !GetAtt RDSStack.Outputs.DBEndpoint
+        DBSecretArn: !GetAtt RDSStack.Outputs.DBSecretArn
+        BlueTargetGroupArn: !GetAtt ALBStack.Outputs.BlueTargetGroupArn
+
+  CodeDeployStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: templates/codedeploy.yaml
+      Parameters:
+        ECSAppName: !Ref ECSAppName
+        ECSClusterName: !GetAtt ECSStack.Outputs.ECSClusterName
+        ECSServiceName: !GetAtt ECSStack.Outputs.ECSServiceName
+        BlueTargetGroupName: !GetAtt ALBStack.Outputs.BlueTargetGroupName
+        GreenTargetGroupName: !GetAtt ALBStack.Outputs.GreenTargetGroupName
+        AlbListenerArn: !GetAtt ALBStack.Outputs.AlbListenerArn
+
+  PipelineStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: templates/codepipeline.yaml
+      Parameters:
+        ECSAppName: !Ref ECSAppName
+        ECRRepoName: !GetAtt ECSStack.Outputs.ECRRepoName
+
+  EventBridgeStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: templates/eventbridge.yaml
+      Parameters:
+        ECRRepoArn: !GetAtt ECSStack.Outputs.ECRRepoArn
+        PipelineName: !GetAtt PipelineStack.Outputs.PipelineName
+
+Outputs:
+  LoadBalancerDNS:
+    Value: !GetAtt ALBStack.Outputs.ALBDnsName
+  S3BucketName:
+    Value: !GetAtt S3Stack.Outputs.S3BucketName
+  RDSSecretArn:
+    Value: !GetAtt RDSStack.Outputs.DBSecretArn
+  ECRRepoURI:
+    Value: !GetAtt ECSStack.Outputs.ECRRepoURI
