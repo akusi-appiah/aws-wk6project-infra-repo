@@ -41,5 +41,7 @@ Resources:
           ServiceName: !Ref ECSServiceName
 
 Outputs:
+  CodeDeployApplicationName:
+    Value: !Ref CodeDeployApplication
   DeploymentGroupName:
     Value: !Ref CodeDeployDeploymentGroup

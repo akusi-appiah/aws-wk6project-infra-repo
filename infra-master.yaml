@@ -30,6 +30,16 @@ Parameters:
     Type: String
     Default: 'igallery-app'
 
+  ContainerName:
+    Type: String
+    Default: "igallery-app"
+    Description: "Name of the container in ECS task definition"
+  
+  GitHubRepo:
+    Type: String
+    Default: "your-username/igallery-app"
+    Description: "GitHub repository for application code"
+
 Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
@@ -130,6 +140,11 @@ Resources:
       Parameters:
         ECSAppName: !Ref ECSAppName
         ECRRepoName: !GetAtt ECSStack.Outputs.ECRRepoName
+        ContainerName: !Ref ContainerName
+        ContainerPort: !Ref ContainerPort
+        TaskDefinitionArn: !GetAtt ECSStack.Outputs.TaskDefinitionArn
+        GitHubRepo: !Ref GitHubRepo
+        ArtifactsBucketName: !GetAtt S3Stack.Outputs.ArtifactsBucketName
 
   EventBridgeStack:
     Type: AWS::CloudFormation::Stack

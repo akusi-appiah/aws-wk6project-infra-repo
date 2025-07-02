@@ -1,16 +1,13 @@
 Parameters:
   ECSAppName: { Type: String }
   ECRRepoName: { Type: String }
+  ContainerName: { Type: String }
+  ContainerPort: { Type: Number }
+  TaskDefinitionArn: { Type: String }  # From ECS stack
+  GitHubRepo: { Type: String }  
+  ArtifactsBucketName: { Type: String }
 
 Resources:
-  ArtifactsBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub codepipeline-artifacts-${ECSAppName}-${AWS::AccountId}
-      AccessControl: Private
-      VersioningConfiguration:
-        Status: Enabled
-
   PipelineRole:
     Type: AWS::IAM::Role
     Properties:
@@ -40,7 +37,7 @@ Resources:
       RoleArn: !GetAtt PipelineRole.Arn
       ArtifactStore:
         Type: S3
-        Location: !Ref ArtifactsBucket
+        Location: !Ref ArtifactsBucketName
       Stages:
         - Name: Source
           Actions:
@@ -57,6 +54,22 @@ Resources:
                 - Name: SourceOutput
               RunOrder: 1
 
+        - Name: Generate-AppSpec
+          Actions:
+          - Name: Generate-AppSpec-File
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Provider: CodeBuild
+              Version: '1'
+            Configuration:
+              ProjectName: !Ref AppSpecGenerator
+            InputArtifacts:
+              - Name: SourceOutput
+            OutputArtifacts:
+              - Name: BuildOutput
+            RunOrder: 1
+
         - Name: Deploy
           Actions:
             - Name: CodeDeploy
@@ -66,11 +79,72 @@ Resources:
                 Provider: CodeDeploy
                 Version: '1'
               Configuration:
-                ApplicationName: !Ref ECSAppName
+                ApplicationName: !Ref CodeDeployApplication
                 DeploymentGroupName: !Sub ${ECSAppName}-dg
               InputArtifacts:
-                - Name: SourceOutput
+                - Name: BuildOutput
               RunOrder: 1
+
+  AppSpecGenerator:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${ECSAppName}-appspec-generator
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:4.0
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - echo "Generating appspec.yaml"
+                - |
+                  cat <<EOF > appspec.yaml
+                  version: 0.0
+                  Resources:
+                    - TargetService:
+                        Type: AWS::ECS::Service
+                        Properties:
+                          TaskDefinition: "${TASK_DEFINITION_ARN}"
+                          LoadBalancerInfo:
+                            ContainerName: "${CONTAINER_NAME}"
+                            ContainerPort: ${CONTAINER_PORT}
+                  EOF
+          artifacts:
+            files: appspec.yaml
+      EnvironmentVariables:
+        - Name: TASK_DEFINITION_ARN
+          Value: !Ref TaskDefinitionArn
+        - Name: CONTAINER_NAME
+          Value: !Ref ContainerName
+        - Name: CONTAINER_PORT
+          Value: !Ref ContainerPort
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: codebuild.amazonaws.com }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodeBuildAccess
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
 
 Outputs:
   PipelineName:
