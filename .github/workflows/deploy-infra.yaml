@@ -22,6 +22,7 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
+        mask-aws-account-id: no
         
     - name: Create S3 bucket if not exists
       id: create-bucket
@@ -34,20 +35,31 @@ jobs:
           echo "Created new bucket"
           echo "bucket_exists=false" >> $GITHUB_OUTPUT
         fi
+
+    - name: Set bucket policy for CloudFormation access
+      run: |
+        BUCKET_POLICY='{
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {"Service": "cloudformation.amazonaws.com"},
+              "Action": "s3:GetObject",
+              "Resource": "arn:aws:s3:::my-infra-wk6templates/*"
+            }
+          ]
+        }'
+        echo "$BUCKET_POLICY" > bucket-policy.json
+        aws s3api put-bucket-policy --bucket my-infra-wk6templates --policy file://bucket-policy.json
         
     - name: Upload templates to S3
       run: |
         # Upload all templates
         aws s3 sync ./ s3://my-infra-wk6templates/ \
+          --acl bucket-owner-full-control \
           --exclude "*" \
           --include "infra-master.yaml" \
           --include "templates/*.yaml"
-          
-        # Set public read access (optional but helpful)
-        # aws s3api put-object-acl \
-        #   --bucket my-infra-wk6templates \
-        #   --key infra-master.yaml \
-        #   --acl public-read
           
     - name: Check if CloudFormation stack exists
       id: check-stack
@@ -72,10 +84,13 @@ jobs:
             ParameterKey=ECSAppName,ParameterValue=igallery-app \
             ParameterKey=ContainerPort,ParameterValue=3000 \
           --tags Key=Project,Value=ImageGallery
+          --disable-rollback
         
         # Wait for completion
+        echo "Waiting for stack creation to complete..."
         aws cloudformation wait stack-create-complete \
-          --stack-name wk6-infrastructure
+          --stack-name wk6-infrastructure \
+          || (aws cloudformation describe-stack-events --stack-name wk6-infrastructure --query 'StackEvents[?ResourceStatus==`CREATE_FAILED`]' --output table; exit 1)
           
     - name: Output stack info
       run: |

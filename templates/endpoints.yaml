@@ -2,6 +2,7 @@ Parameters:
   VpcId: { Type: String }
   PrivateRouteTableId: { Type: String }
   EndpointSecurityGroup: { Type: String }
+  PrivateSubnetIds: { Type: CommaDelimitedList } 
 
 Resources:
   S3GatewayEndpoint:
@@ -18,7 +19,7 @@ Resources:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
       VpcId: !Ref VpcId
       SecurityGroupIds: [!Ref EndpointSecurityGroup]
-      SubnetIds: !Split [',', !GetAtt VPCStack.Outputs.PrivateSubnets]
+      SubnetIds: !Ref PrivateSubnetIds
       PrivateDnsEnabled: true
 
   ECRApiEndpoint:
@@ -27,7 +28,7 @@ Resources:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
       VpcId: !Ref VpcId
       SecurityGroupIds: [!Ref EndpointSecurityGroup]
-      SubnetIds: !Split [',', !GetAtt VPCStack.Outputs.PrivateSubnets]
+      SubnetIds: !Ref PrivateSubnetIds
       PrivateDnsEnabled: true
 
   CloudWatchLogsEndpoint:
@@ -36,7 +37,7 @@ Resources:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
       VpcId: !Ref VpcId
       SecurityGroupIds: [!Ref EndpointSecurityGroup]
-      SubnetIds: !Split [',', !GetAtt VPCStack.Outputs.PrivateSubnets]
+      SubnetIds: !Ref PrivateSubnetIds
       PrivateDnsEnabled: true
 
   SecretsManagerEndpoint:
@@ -45,5 +46,5 @@ Resources:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.secretsmanager
       VpcId: !Ref VpcId
       SecurityGroupIds: [!Ref EndpointSecurityGroup]
-      SubnetIds: !Split [',', !GetAtt VPCStack.Outputs.PrivateSubnets]
+      SubnetIds: !Ref PrivateSubnetIds
       PrivateDnsEnabled: true

@@ -1,6 +1,7 @@
 Parameters:
   VpcId: { Type: String }
   ContainerPort: { Type: Number }
+  VpcCidr: { Type: String, Default: '10.0.0.0/16'}
 
 Resources:
   EndpointSG:

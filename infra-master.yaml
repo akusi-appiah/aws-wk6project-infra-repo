@@ -63,6 +63,7 @@ Resources:
       Parameters:
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         ContainerPort: !Ref ContainerPort
+        VpcCidr: !Ref VpcCidr
 
   EndpointsStack:
     Type: AWS::CloudFormation::Stack
@@ -72,6 +73,7 @@ Resources:
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateRouteTableId: !GetAtt VPCStack.Outputs.PrivateRouteTableId
         EndpointSecurityGroup: !GetAtt SecurityStack.Outputs.EndpointSecurityGroup
+        PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnets
 
   RDSStack:
     Type: AWS::CloudFormation::Stack
