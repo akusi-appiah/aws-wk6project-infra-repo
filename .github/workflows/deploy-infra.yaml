@@ -36,21 +36,21 @@ jobs:
           echo "bucket_exists=false" >> $GITHUB_OUTPUT
         fi
 
-    - name: Set bucket policy for CloudFormation access
-      run: |
-        BUCKET_POLICY='{
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {"Service": "cloudformation.amazonaws.com"},
-              "Action": "s3:GetObject",
-              "Resource": "arn:aws:s3:::my-infra-wk6templates/*"
-            }
-          ]
-        }'
-        echo "$BUCKET_POLICY" > bucket-policy.json
-        aws s3api put-bucket-policy --bucket my-infra-wk6templates --policy file://bucket-policy.json
+    # - name: Set bucket policy for CloudFormation access
+    #   run: |
+    #     BUCKET_POLICY='{
+    #       "Version": "2012-10-17",
+    #       "Statement": [
+    #         {
+    #           "Effect": "Allow",
+    #           "Principal": {"Service": "cloudformation.amazonaws.com"},
+    #           "Action": "s3:GetObject",
+    #           "Resource": "arn:aws:s3:::my-infra-wk6templates/*"
+    #         }
+    #       ]
+    #     }'
+    #     echo "$BUCKET_POLICY" > bucket-policy.json
+    #     aws s3api put-bucket-policy --bucket my-infra-wk6templates --policy file://bucket-policy.json
         
     - name: Upload templates to S3
       run: |

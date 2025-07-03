@@ -69,7 +69,7 @@ Resources:
 
   EndpointsStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: SecurityStack
+    DependsOn: [SecurityStack, RDSStack]
     Properties:
       TemplateURL: !Sub ${TemplatesURL}endpoints.yaml
       Parameters:
