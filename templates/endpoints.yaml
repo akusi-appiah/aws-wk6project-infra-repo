@@ -13,38 +13,38 @@ Resources:
       RouteTableIds: [!Ref PrivateRouteTableId]
       VpcEndpointType: Gateway
 
-  # ECRDockerEndpoint:
-  #   Type: AWS::EC2::VPCEndpoint
-  #   Properties:
-  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
-  #     VpcId: !Ref VpcId
-  #     SecurityGroupIds: [!Ref EndpointSecurityGroup]
-  #     SubnetIds: !Ref PrivateSubnetIds
-  #     PrivateDnsEnabled: true
+  ECRDockerEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
+      VpcId: !Ref VpcId
+      SecurityGroupIds: [!Ref EndpointSecurityGroup]
+      SubnetIds: !Ref PrivateSubnetIds
+      PrivateDnsEnabled: true
 
-  # ECRApiEndpoint:
-  #   Type: AWS::EC2::VPCEndpoint
-  #   Properties:
-  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
-  #     VpcId: !Ref VpcId
-  #     SecurityGroupIds: [!Ref EndpointSecurityGroup]
-  #     SubnetIds: !Ref PrivateSubnetIds
-  #     PrivateDnsEnabled: true
+  ECRApiEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
+      VpcId: !Ref VpcId
+      SecurityGroupIds: [!Ref EndpointSecurityGroup]
+      SubnetIds: !Ref PrivateSubnetIds
+      PrivateDnsEnabled: true
 
-  # CloudWatchLogsEndpoint:
-  #   Type: AWS::EC2::VPCEndpoint
-  #   Properties:
-  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
-  #     VpcId: !Ref VpcId
-  #     SecurityGroupIds: [!Ref EndpointSecurityGroup]
-  #     SubnetIds: !Ref PrivateSubnetIds
-  #     PrivateDnsEnabled: true
+  CloudWatchLogsEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
+      VpcId: !Ref VpcId
+      SecurityGroupIds: [!Ref EndpointSecurityGroup]
+      SubnetIds: !Ref PrivateSubnetIds
+      PrivateDnsEnabled: true
 
-  # SecretsManagerEndpoint:
-  #   Type: AWS::EC2::VPCEndpoint
-  #   Properties:
-  #     ServiceName: !Sub com.amazonaws.${AWS::Region}.secretsmanager
-  #     VpcId: !Ref VpcId
-  #     SecurityGroupIds: [!Ref EndpointSecurityGroup]
-  #     SubnetIds: !Ref PrivateSubnetIds
-  #     PrivateDnsEnabled: true
+  SecretsManagerEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.secretsmanager
+      VpcId: !Ref VpcId
+      SecurityGroupIds: [!Ref EndpointSecurityGroup]
+      SubnetIds: !Ref PrivateSubnetIds
+      PrivateDnsEnabled: true

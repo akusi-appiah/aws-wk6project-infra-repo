@@ -95,16 +95,16 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
 
-  # ALBStack:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: !Sub ${TemplatesURL}alb.yaml
-  #     Parameters:
-  #       VpcId: !GetAtt VPCStack.Outputs.VpcId
-  #       PublicSubnetIds: !GetAtt VPCStack.Outputs.PublicSubnets
-  #       ContainerPort: !Ref ContainerPort
-  #       ECSAppName: !Ref ECSAppName
-  #       AlbSecurityGroup: !GetAtt SecurityStack.Outputs.AlbSecurityGroup
+  ALBStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplatesURL}alb.yaml
+      Parameters:
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PublicSubnetIds: !GetAtt VPCStack.Outputs.PublicSubnets
+        ContainerPort: !Ref ContainerPort
+        ECSAppName: !Ref ECSAppName
+        AlbSecurityGroup: !GetAtt SecurityStack.Outputs.AlbSecurityGroup
 
   IAMStack:
     Type: AWS::CloudFormation::Stack
@@ -115,20 +115,20 @@ Resources:
         S3BucketArn: !GetAtt S3Stack.Outputs.S3BucketArn
         DBSecretArn: !GetAtt RDSStack.Outputs.DBSecretArn
 
-  # ECSStack:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: !Sub ${TemplatesURL}ecs.yaml
-  #     Parameters:
-  #       ECSAppName: !Ref ECSAppName
-  #       ContainerPort: !Ref ContainerPort
-  #       PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnets
-  #       TaskSecurityGroup: !GetAtt SecurityStack.Outputs.TaskSecurityGroup
-  #       TaskExecutionRoleArn: !GetAtt IAMStack.Outputs.TaskExecutionRoleArn
-  #       S3BucketName: !GetAtt S3Stack.Outputs.S3BucketName
-  #       DBEndpoint: !GetAtt RDSStack.Outputs.DBEndpoint
-  #       DBSecretArn: !GetAtt RDSStack.Outputs.DBSecretArn
-  #       BlueTargetGroupArn: !GetAtt ALBStack.Outputs.BlueTargetGroupArn
+  ECSStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplatesURL}ecs.yaml
+      Parameters:
+        ECSAppName: !Ref ECSAppName
+        ContainerPort: !Ref ContainerPort
+        PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnets
+        TaskSecurityGroup: !GetAtt SecurityStack.Outputs.TaskSecurityGroup
+        TaskExecutionRoleArn: !GetAtt IAMStack.Outputs.TaskExecutionRoleArn
+        S3BucketName: !GetAtt S3Stack.Outputs.S3BucketName
+        DBEndpoint: !GetAtt RDSStack.Outputs.DBEndpoint
+        DBSecretArn: !GetAtt RDSStack.Outputs.DBSecretArn
+        BlueTargetGroupArn: !GetAtt ALBStack.Outputs.BlueTargetGroupArn
 
   # CodeDeployStack:
   #   Type: AWS::CloudFormation::Stack
@@ -164,11 +164,11 @@ Resources:
   #       PipelineName: !GetAtt PipelineStack.Outputs.PipelineName
 
 Outputs:
-  # LoadBalancerDNS:
-  #   Value: !GetAtt ALBStack.Outputs.ALBDnsName
+  LoadBalancerDNS:
+    Value: !GetAtt ALBStack.Outputs.ALBDnsName
   S3BucketName:
     Value: !GetAtt S3Stack.Outputs.S3BucketName
   RDSSecretArn:
     Value: !GetAtt RDSStack.Outputs.DBSecretArn
-  # ECRRepoURI:
-  #   Value: !GetAtt ECSStack.Outputs.ECRRepoURI
+  ECRRepoURI:
+    Value: !GetAtt ECSStack.Outputs.ECRRepoURI
