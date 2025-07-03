@@ -60,6 +60,7 @@ jobs:
           --exclude "*" \
           --include "infra-master.yaml" \
           --include "templates/*.yaml"
+  
           
     - name: Check if CloudFormation stack exists
       id: check-stack
@@ -77,24 +78,18 @@ jobs:
       run: |
         aws cloudformation create-stack \
           --stack-name wk6-infrastructure \
-          --template-url https://my-infra-wk6templates.s3.${{ secrets.AWS_REGION }}.amazonaws.com/infra-master.yaml \
+          --template-url "https://my-infra-wk6templates.s3.${{ secrets.AWS_REGION }}.amazonaws.com/infra-master.yaml" \
           --capabilities CAPABILITY_NAMED_IAM \
           --parameters \
             ParameterKey=EnvironmentName,ParameterValue=prod \
             ParameterKey=ECSAppName,ParameterValue=igallery-app \
             ParameterKey=ContainerPort,ParameterValue=3000 \
           --tags Key=Project,Value=ImageGallery
-          --disable-rollback
-        
-        # Wait for completion
-        echo "Waiting for stack creation to complete..."
-        aws cloudformation wait stack-create-complete \
-          --stack-name wk6-infrastructure \
-          || (aws cloudformation describe-stack-events --stack-name wk6-infrastructure --query 'StackEvents[?ResourceStatus==`CREATE_FAILED`]' --output table; exit 1)
           
-    - name: Output stack info
-      run: |
-        echo "Stack outputs:"
-        aws cloudformation describe-stacks \
+        
+        aws cloudformation wait stack-create-complete \
+          --stack-name wk6-infrastructure || \
+        (aws cloudformation describe-stack-events \
           --stack-name wk6-infrastructure \
-          --query "Stacks[0].Outputs"
+          --query 'StackEvents[?ResourceStatus==`CREATE_FAILED`]' \
+          --output table; exit 1)
