@@ -21,6 +21,8 @@ Resources:
           - Id: ImageLifecycle
             Status: Enabled
             ExpirationInDays: 365
+      VersioningConfiguration:
+        Status: Enabled
 
   ArtifactsBucket:
     Type: AWS::S3::Bucket

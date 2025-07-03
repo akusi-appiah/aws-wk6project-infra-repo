@@ -1,0 +1,85 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'infra-master.yaml'
+      - 'templates/**'
+
+jobs:
+  deploy-infrastructure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Create S3 bucket if not exists
+      id: create-bucket
+      run: |
+        if aws s3 ls "s3://my-infra-wk6templates" 2>/dev/null; then
+          echo "Bucket already exists"
+          echo "bucket_exists=true" >> $GITHUB_OUTPUT
+        else
+          aws s3 mb s3://my-infra-wk6templates
+          echo "Created new bucket"
+          echo "bucket_exists=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Upload templates to S3
+      run: |
+        # Upload all templates
+        aws s3 sync ./ s3://my-infra-wk6templates/ \
+          --exclude "*" \
+          --include "infra-master.yaml" \
+          --include "templates/*.yaml"
+          
+        # Set public read access (optional but helpful)
+        # aws s3api put-object-acl \
+        #   --bucket my-infra-wk6templates \
+        #   --key infra-master.yaml \
+        #   --acl public-read
+          
+    - name: Check if CloudFormation stack exists
+      id: check-stack
+      run: |
+        if aws cloudformation describe-stacks --stack-name wk6-infrastructure &>/dev/null; then
+          echo "Stack exists"
+          echo "stack_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "Stack does not exist"
+          echo "stack_exists=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Deploy CloudFormation stack
+      if: steps.check-stack.outputs.stack_exists == 'false'
+      run: |
+        aws cloudformation create-stack \
+          --stack-name wk6-infrastructure \
+          --template-url https://my-infra-wk6templates.s3.${{ secrets.AWS_REGION }}.amazonaws.com/infra-master.yaml \
+          --capabilities CAPABILITY_NAMED_IAM \
+          --parameters \
+            ParameterKey=EnvironmentName,ParameterValue=prod \
+            ParameterKey=ECSAppName,ParameterValue=igallery-app \
+            ParameterKey=ContainerPort,ParameterValue=3000 \
+          --tags Key=Project,Value=ImageGallery
+        
+        # Wait for completion
+        aws cloudformation wait stack-create-complete \
+          --stack-name wk6-infrastructure
+          
+    - name: Output stack info
+      run: |
+        echo "Stack outputs:"
+        aws cloudformation describe-stacks \
+          --stack-name wk6-infrastructure \
+          --query "Stacks[0].Outputs"
