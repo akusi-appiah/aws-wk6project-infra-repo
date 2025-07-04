@@ -144,6 +144,8 @@ Resources:
         BlueTargetGroupName: !GetAtt ALBStack.Outputs.BlueTargetGroupName
         GreenTargetGroupName: !GetAtt ALBStack.Outputs.GreenTargetGroupName
         AlbListenerArn: !GetAtt ALBStack.Outputs.AlbListenerArn
+        CodeDeployRoleArn: !GetAtt IAMStack.Outputs.CodeDeployRoleArn
+
 
   # PipelineStack:
   #   Type: AWS::CloudFormation::Stack

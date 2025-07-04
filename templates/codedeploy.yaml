@@ -7,6 +7,7 @@ Parameters:
   BlueTargetGroupName: { Type: String }
   GreenTargetGroupName: { Type: String }
   AlbListenerArn: { Type: String }
+  CodeDeployRoleArn: { Type: String }
 
 Resources:
   CodeDeployApplication:
@@ -20,7 +21,7 @@ Resources:
     Properties:
       ApplicationName: !Ref CodeDeployApplication
       DeploymentGroupName: !Sub ${ECSAppName}-dg
-      ServiceRoleArn: !GetAtt IAMStack.Outputs.CodeDeployRoleArn
+      ServiceRoleArn: !Ref CodeDeployRoleArn
       DeploymentStyle:
         DeploymentType: BLUE_GREEN
         DeploymentOption: WITH_TRAFFIC_CONTROL
@@ -30,7 +31,7 @@ Resources:
           TerminationWaitTimeInMinutes: 5
         DeploymentReadyOption:
           ActionOnTimeout: CONTINUE_DEPLOYMENT
-          
+
       LoadBalancerInfo:
         TargetGroupPairInfoList:
           - TargetGroups:
