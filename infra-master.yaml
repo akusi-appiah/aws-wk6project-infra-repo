@@ -161,13 +161,14 @@ Resources:
         CodeDeployApplication: !GetAtt CodeDeployStack.Outputs.CodeDeployApplicationName
         ArtifactsBucketName: !GetAtt S3Stack.Outputs.ArtifactsBucketName
 
-  # EventBridgeStack:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: !Sub ${TemplatesURL}eventbridge.yaml
-  #     Parameters:
-  #       ECRRepoArn: !GetAtt ECSStack.Outputs.ECRRepoArn
-  #       PipelineName: !GetAtt PipelineStack.Outputs.PipelineName
+  EventBridgeStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: PipelineStack
+    Properties:
+      TemplateURL: !Sub ${TemplatesURL}eventbridge.yaml
+      Parameters:
+        ECRRepoArn: !GetAtt ECSStack.Outputs.ECRRepoArn
+        PipelineName: !GetAtt PipelineStack.Outputs.PipelineName
 
 Outputs:
   LoadBalancerDNS:

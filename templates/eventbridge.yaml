@@ -1,3 +1,4 @@
+Description: "EventBridge rule to trigger CodePipeline on ECR image push"
 Parameters:
   ECRRepoArn: { Type: String }
   PipelineName: { Type: String }
@@ -13,8 +14,9 @@ Resources:
         detail:
           action-type: ["PUSH"]
           result: ["SUCCESS"]
-          repository-name: [!Select [1, !Split ['/', !Select [5, !Split [':', !Ref ECRRepoArn]]]]
-          image-tag: ["latest"]
+          repository-name: [!Select [1, !Split ['/', !Select [5, !Split [':', !Ref ECRRepoArn]]]]] 
+          image-tag: ["latest"] 
+
       Targets:
         - Arn: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${PipelineName}
           RoleArn: !GetAtt EventRole.Arn
