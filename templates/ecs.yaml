@@ -59,6 +59,10 @@ Resources:
               Value: !Ref DBSecretArn
             - Name: S3_REGION
               Value: !Ref AWS::Region
+            - Name: DB_NAME
+              Value: appdb     
+            - Name: TABLE_NAME
+              Value: images
           LogConfiguration:
             LogDriver: awslogs
             Options:

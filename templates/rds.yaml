@@ -22,7 +22,7 @@ Resources:
       Name: !Sub ${EnvironmentName}/rds/credentials
       Description: RDS database credentials
       GenerateSecretString:
-        SecretStringTemplate: '{"username": "dbadmin"}'
+        SecretStringTemplate: '{"username": "dbadmin", "dbname": "appdb"}'
         GenerateStringKey: "password"
         PasswordLength: 16
         ExcludeCharacters: '"@/\'
@@ -40,6 +40,7 @@ Resources:
         - !Ref DBSecurityGroup
       MasterUsername: !Sub '{{resolve:secretsmanager:${DBSecret}::username}}'
       MasterUserPassword: !Sub '{{resolve:secretsmanager:${DBSecret}::password}}'
+      DBName: !Sub '{{resolve:secretsmanager:${DBSecret}:SecretString:dbname}}'
       MultiAZ: true
       PubliclyAccessible: false
       StorageEncrypted: true
