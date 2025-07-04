@@ -1,3 +1,5 @@
+Description: 'AppsS3 and Artifacts Buckets'
+
 Parameters:
   EnvironmentName: { Type: String }
 

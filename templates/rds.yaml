@@ -1,3 +1,5 @@
+Description: 'PostGreSQL Database infrastructure'
+
 Parameters:
   VpcId: { Type: String }
   PrivateSubnetIds: { Type: CommaDelimitedList }

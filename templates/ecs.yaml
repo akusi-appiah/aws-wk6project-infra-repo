@@ -1,3 +1,5 @@
+Description: 'ECSCluster, ECR, TaskDefinition, ECSServices and AutoScaling infrastructure'
+
 Parameters:
   ECSAppName: { Type: String }
   ContainerPort: { Type: Number }
@@ -10,7 +12,7 @@ Parameters:
   BlueTargetGroupArn: { Type: String }
   ContainerName:
     Type: String
-    Default: "igallery-app"  # Should match your application container name
+    Default: "igallery-app"  
 
 Resources:
   ECSCluster:

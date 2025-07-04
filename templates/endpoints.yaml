@@ -1,3 +1,5 @@
+Description: 'S3Gateway,ECRDocker,ECRApi,CloudWatchLogs and SecretsManager Endpoints'
+
 Parameters:
   VpcId: { Type: String }
   PrivateRouteTableId: { Type: String }

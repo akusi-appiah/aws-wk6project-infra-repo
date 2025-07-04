@@ -1,3 +1,5 @@
+Description: 'VPC, Subnets, Routes and Gateway infrastructure'
+
 Parameters:
   EnvironmentName: { Type: String }
   VpcCidr: { Type: String }

@@ -1,3 +1,5 @@
+Description: 'Endpoints, ALB, Tasks and Database Security Groups'
+
 Parameters:
   VpcId: { Type: String }
   ContainerPort: { Type: Number }

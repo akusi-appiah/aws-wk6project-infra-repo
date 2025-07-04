@@ -1,3 +1,5 @@
+Description: 'IAM roles defined for TaskExecution and CodeDeploy'
+
 Parameters:
   EnvironmentName: { Type: String }
   S3BucketArn: { Type: String }
