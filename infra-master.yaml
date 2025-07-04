@@ -147,18 +147,19 @@ Resources:
         CodeDeployRoleArn: !GetAtt IAMStack.Outputs.CodeDeployRoleArn
 
 
-  # PipelineStack:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: !Sub ${TemplatesURL}codepipeline.yaml
-  #     Parameters:
-  #       ECSAppName: !Ref ECSAppName
-  #       ECRRepoName: !GetAtt ECSStack.Outputs.ECRRepoName
-  #       ContainerName: !Ref ContainerName
-  #       ContainerPort: !Ref ContainerPort
-  #       TaskDefinitionArn: !GetAtt ECSStack.Outputs.TaskDefinitionArn
-  #       GitHubRepo: !Ref GitHubRepo
-  #       ArtifactsBucketName: !GetAtt S3Stack.Outputs.ArtifactsBucketName
+  PipelineStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: [ECSStack, CodeDeployStack, S3Stack]
+    Properties:
+      TemplateURL: !Sub ${TemplatesURL}codepipeline.yaml
+      Parameters:
+        ECSAppName: !Ref ECSAppName
+        ECRRepoName: !GetAtt ECSStack.Outputs.ECRRepoName
+        ContainerName: !Ref ContainerName
+        ContainerPort: !Ref ContainerPort
+        TaskDefinitionArn: !GetAtt ECSStack.Outputs.TaskDefinitionArn
+        CodeDeployApplication: !GetAtt CodeDeployStack.Outputs.CodeDeployApplicationName
+        ArtifactsBucketName: !GetAtt S3Stack.Outputs.ArtifactsBucketName
 
   # EventBridgeStack:
   #   Type: AWS::CloudFormation::Stack

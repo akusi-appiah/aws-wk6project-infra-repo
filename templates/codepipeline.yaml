@@ -1,10 +1,12 @@
+Description: "AWS CodePipeline for ECS Deployment"
+
 Parameters:
   ECSAppName: { Type: String }
   ECRRepoName: { Type: String }
   ContainerName: { Type: String }
   ContainerPort: { Type: Number }
   TaskDefinitionArn: { Type: String }  # From ECS stack
-  GitHubRepo: { Type: String }  
+  CodeDeployApplication: { Type: String }  
   ArtifactsBucketName: { Type: String }
 
 Resources:
