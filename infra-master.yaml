@@ -67,16 +67,16 @@ Resources:
         ContainerPort: !Ref ContainerPort
         VpcCidr: !Ref VpcCidr
 
-  EndpointsStack:
-    Type: AWS::CloudFormation::Stack
-    DependsOn: [SecurityStack, RDSStack]
-    Properties:
-      TemplateURL: !Sub ${TemplatesURL}endpoints.yaml
-      Parameters:
-        VpcId: !GetAtt VPCStack.Outputs.VpcId
-        PrivateRouteTableId: !GetAtt VPCStack.Outputs.PrivateRouteTableId
-        EndpointSecurityGroup: !GetAtt SecurityStack.Outputs.EndpointSecurityGroup
-        PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnets
+  # EndpointsStack:
+  #   Type: AWS::CloudFormation::Stack
+  #   DependsOn: [SecurityStack, RDSStack]
+  #   Properties:
+  #     TemplateURL: !Sub ${TemplatesURL}endpoints.yaml
+  #     Parameters:
+  #       VpcId: !GetAtt VPCStack.Outputs.VpcId
+  #       PrivateRouteTableId: !GetAtt VPCStack.Outputs.PrivateRouteTableId
+  #       EndpointSecurityGroup: !GetAtt SecurityStack.Outputs.EndpointSecurityGroup
+  #       PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnets
 
   RDSStack:
     Type: AWS::CloudFormation::Stack

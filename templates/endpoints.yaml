@@ -14,12 +14,15 @@ Resources:
       VpcId: !Ref VpcId
       RouteTableIds: [!Ref PrivateRouteTableId]
       VpcEndpointType: Gateway
+      PolicyDocument:
+        Statement: [{ Action: "s3:*", Effect: Allow, Principal: "*", Resource: "*" }]
 
   ECRDockerEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
       VpcId: !Ref VpcId
+      VpcEndpointType: Interface
       SecurityGroupIds: [!Ref EndpointSecurityGroup]
       SubnetIds: !Ref PrivateSubnetIds
       PrivateDnsEnabled: true
@@ -28,6 +31,7 @@ Resources:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
+      VpcEndpointType: Interface
       VpcId: !Ref VpcId
       SecurityGroupIds: [!Ref EndpointSecurityGroup]
       SubnetIds: !Ref PrivateSubnetIds
@@ -37,6 +41,7 @@ Resources:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
+      VpcEndpointType: Interface
       VpcId: !Ref VpcId
       SecurityGroupIds: [!Ref EndpointSecurityGroup]
       SubnetIds: !Ref PrivateSubnetIds
@@ -46,6 +51,7 @@ Resources:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.secretsmanager
+      VpcEndpointType: Interface
       VpcId: !Ref VpcId
       SecurityGroupIds: [!Ref EndpointSecurityGroup]
       SubnetIds: !Ref PrivateSubnetIds
