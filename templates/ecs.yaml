@@ -6,6 +6,7 @@ Parameters:
   PrivateSubnetIds: { Type: CommaDelimitedList }
   TaskSecurityGroup: { Type: String }
   TaskExecutionRoleArn: { Type: String }
+  ApplicationAutoscalingRoleArn : {Type: String}
   S3BucketName: { Type: String }
   DBEndpoint: { Type: String }
   DBSecretArn: { Type: String }
@@ -34,6 +35,7 @@ Resources:
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
+    DependsOn: AppLogGroup
     Properties:
       Family: !Sub ${ECSAppName}-task
       NetworkMode: awsvpc
@@ -44,8 +46,10 @@ Resources:
       ContainerDefinitions:
         - Name: !Ref ContainerName
           Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:latest
+          Essential: true
           PortMappings:
             - ContainerPort: !Ref ContainerPort
+              Protocol: tcp
           Environment:
             - Name: S3_BUCKET
               Value: !Ref S3BucketName
@@ -53,20 +57,25 @@ Resources:
               Value: !Ref DBEndpoint
             - Name: DB_SECRET_ARN
               Value: !Ref DBSecretArn
+            - Name: S3_REGION
+              Value: !Ref AWS::Region
           LogConfiguration:
             LogDriver: awslogs
             Options:
+              awslogs-create-group: 'true'
               awslogs-group: !Ref AppLogGroup
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
 
   ECSService:
     Type: AWS::ECS::Service
+    DependsOn: TaskDefinition
     Properties:
       ServiceName: !Sub ${ECSAppName}-service
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref TaskDefinition
       DesiredCount: 0
+      LaunchType: FARGATE
       DeploymentController:
         Type: CODE_DEPLOY
       NetworkConfiguration:
@@ -86,13 +95,16 @@ Resources:
       RetentionInDays: 14
 
   AutoScalingTarget:
-    Type: AWS::ApplicationAutoScaling::ScalingTarget
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    DependsOn: ECSService
     Properties:
       MaxCapacity: 4
       MinCapacity: 2
       ResourceId: !Sub service/${ECSCluster}/${ECSService.Name}
+      RoleARN: !Ref ApplicationAutoscalingRoleArn
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
+
   AutoScalingPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
@@ -100,9 +112,9 @@ Resources:
       PolicyType: TargetTrackingScaling
       ScalingTargetId: !Ref AutoScalingTarget
       TargetTrackingScalingPolicyConfiguration:
-        TargetValue: 70.0
-        ScaleInCooldown: 300
-        ScaleOutCooldown: 300
+        TargetValue: 50.0
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
         PredefinedMetricSpecification:
           PredefinedMetricType: ECSServiceAverageCPUUtilization
 

@@ -53,6 +53,30 @@ Resources:
                   - logs:PutLogEvents
                 Resource: "*"
 
+  # -- Application Auto Scaling Role --
+  ApplicationAutoscalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: application-autoscaling.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AppAutoscalingPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecs:UpdateService
+                  - ecs:DescribeServices
+                  - cloudwatch:PutMetricAlarm
+                  - cloudwatch:DescribeAlarms
+                  - application-autoscaling:*
+                Resource: '*'
+
   CodeDeployRole:
     Type: AWS::IAM::Role
     Properties:
@@ -69,5 +93,7 @@ Resources:
 Outputs:
   TaskExecutionRoleArn:
     Value: !GetAtt TaskExecutionRole.Arn
+  ApplicationAutoscalingRoleArn:
+    Value: !GetAtt ApplicationAutoscalingRole.Arn
   CodeDeployRoleArn:
     Value: !GetAtt CodeDeployRole.Arn

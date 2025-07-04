@@ -117,6 +117,7 @@ Resources:
 
   ECSStack:
     Type: AWS::CloudFormation::Stack
+    DependsOn: [IAMStack, ALBStack]
     Properties:
       TemplateURL: !Sub ${TemplatesURL}ecs.yaml
       Parameters:
@@ -125,6 +126,7 @@ Resources:
         PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnets
         TaskSecurityGroup: !GetAtt SecurityStack.Outputs.TaskSecurityGroup
         TaskExecutionRoleArn: !GetAtt IAMStack.Outputs.TaskExecutionRoleArn
+        ApplicationAutoscalingRoleArn: !GetAtt IAMStack.Outputs.ApplicationAutoscalingRoleArn
         S3BucketName: !GetAtt S3Stack.Outputs.S3BucketName
         DBEndpoint: !GetAtt RDSStack.Outputs.DBEndpoint
         DBSecretArn: !GetAtt RDSStack.Outputs.DBSecretArn
