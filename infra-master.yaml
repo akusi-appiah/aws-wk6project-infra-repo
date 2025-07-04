@@ -160,6 +160,8 @@ Resources:
         TaskDefinitionArn: !GetAtt ECSStack.Outputs.TaskDefinitionArn
         CodeDeployApplication: !GetAtt CodeDeployStack.Outputs.CodeDeployApplicationName
         ArtifactsBucketName: !GetAtt S3Stack.Outputs.ArtifactsBucketName
+        ECSClusterName: !GetAtt ECSStack.Outputs.ECSClusterName
+        ECSServiceName: !GetAtt ECSStack.Outputs.ECSServiceName
 
   EventBridgeStack:
     Type: AWS::CloudFormation::Stack
