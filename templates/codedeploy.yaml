@@ -39,7 +39,7 @@ Resources:
               - Name: !Ref GreenTargetGroupName
             ProdTrafficRoute:
               ListenerArns: [!Ref AlbListenerArn]
-      EcsServices:
+      ECSServices:
         - ClusterName: !Ref ECSClusterName
           ServiceName: !Ref ECSServiceName
 
