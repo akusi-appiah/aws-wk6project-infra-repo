@@ -100,7 +100,8 @@ Resources:
         Image: aws/codebuild/amazonlinux2-x86_64-standard:4.0
       Source:
         Type: CODEPIPELINE
-        BuildSpec: !Sub |
+        BuildSpec: !Sub
+        - |
           version: 0.2
           phases:
             build:
@@ -113,13 +114,14 @@ Resources:
                     - TargetService:
                         Type: AWS::ECS::Service
                         Properties:
-                          TaskDefinition: "$${TASK_DEFINITION_ARN}"
+                          TaskDefinition: "${TASK_DEFINITION_ARN}"
                           LoadBalancerInfo:
-                            ContainerName: "$${CONTAINER_NAME}"
-                            ContainerPort: $${CONTAINER_PORT}
+                            ContainerName: "${CONTAINER_NAME}"
+                            ContainerPort: ${CONTAINER_PORT}
                   EOF
           artifacts:
             files: appspec.yaml
+        - {}
       EnvironmentVariables:
         - Name: TASK_DEFINITION_ARN
           Value: !Ref TaskDefinitionArn
