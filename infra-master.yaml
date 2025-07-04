@@ -132,17 +132,18 @@ Resources:
         DBSecretArn: !GetAtt RDSStack.Outputs.DBSecretArn
         BlueTargetGroupArn: !GetAtt ALBStack.Outputs.BlueTargetGroupArn
 
-  # CodeDeployStack:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: !Sub ${TemplatesURL}codedeploy.yaml
-  #     Parameters:
-  #       ECSAppName: !Ref ECSAppName
-  #       ECSClusterName: !GetAtt ECSStack.Outputs.ECSClusterName
-  #       ECSServiceName: !GetAtt ECSStack.Outputs.ECSServiceName
-  #       BlueTargetGroupName: !GetAtt ALBStack.Outputs.BlueTargetGroupName
-  #       GreenTargetGroupName: !GetAtt ALBStack.Outputs.GreenTargetGroupName
-  #       AlbListenerArn: !GetAtt ALBStack.Outputs.AlbListenerArn
+  CodeDeployStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: ECSStack
+    Properties:
+      TemplateURL: !Sub ${TemplatesURL}codedeploy.yaml
+      Parameters:
+        ECSAppName: !Ref ECSAppName
+        ECSClusterName: !GetAtt ECSStack.Outputs.ECSClusterName
+        ECSServiceName: !GetAtt ECSStack.Outputs.ECSServiceName
+        BlueTargetGroupName: !GetAtt ALBStack.Outputs.BlueTargetGroupName
+        GreenTargetGroupName: !GetAtt ALBStack.Outputs.GreenTargetGroupName
+        AlbListenerArn: !GetAtt ALBStack.Outputs.AlbListenerArn
 
   # PipelineStack:
   #   Type: AWS::CloudFormation::Stack
