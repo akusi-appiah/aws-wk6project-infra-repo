@@ -113,10 +113,10 @@ Resources:
                     - TargetService:
                         Type: AWS::ECS::Service
                         Properties:
-                          TaskDefinition: "${TASK_DEFINITION_ARN}"
+                          TaskDefinition: "$${TASK_DEFINITION_ARN}"
                           LoadBalancerInfo:
-                            ContainerName: "${CONTAINER_NAME}"
-                            ContainerPort: ${CONTAINER_PORT}
+                            ContainerName: "$${CONTAINER_NAME}"
+                            ContainerPort: $${CONTAINER_PORT}
                   EOF
           artifacts:
             files: appspec.yaml
