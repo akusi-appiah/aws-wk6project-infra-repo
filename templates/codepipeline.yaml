@@ -98,38 +98,16 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/amazonlinux2-x86_64-standard:4.0
+        EnvironmentVariables:
+          - Name: TASK_DEFINITION_ARN
+            Value: !Ref TaskDefinitionArn
+          - Name: CONTAINER_NAME
+            Value: !Ref ContainerName
+          - Name: CONTAINER_PORT
+            Value: !Ref ContainerPort
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Sub "s3://wk6buildsecbucket/buildsec.yaml"
-        # BuildSpec: !Sub
-        # - |
-        #   version: 0.2
-        #   phases:
-        #     build:
-        #       commands:
-        #         - echo "Generating appspec.yaml"
-        #         - |
-        #           cat <<EOF > appspec.yaml
-        #           version: 0.0
-        #           Resources:
-        #             - TargetService:
-        #                 Type: AWS::ECS::Service
-        #                 Properties:
-        #                   TaskDefinition: "${TASK_DEFINITION_ARN}"
-        #                   LoadBalancerInfo:
-        #                     ContainerName: "${CONTAINER_NAME}"
-        #                     ContainerPort: ${CONTAINER_PORT}
-        #           EOF
-        #   artifacts:
-        #     files: appspec.yaml
-        # - {}
-      EnvironmentVariables:
-        - Name: TASK_DEFINITION_ARN
-          Value: !Ref TaskDefinitionArn
-        - Name: CONTAINER_NAME
-          Value: !Ref ContainerName
-        - Name: CONTAINER_PORT
-          Value: !Ref ContainerPort
 
   CodeBuildRole:
     Type: AWS::IAM::Role
