@@ -117,7 +117,7 @@ Resources:
 
   ECSStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: [IAMStack, ALBStack]
+    DependsOn: ALBStack
     Properties:
       TemplateURL: !Sub ${TemplatesURL}ecs.yaml
       Parameters:
