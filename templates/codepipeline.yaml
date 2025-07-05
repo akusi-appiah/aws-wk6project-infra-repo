@@ -119,25 +119,35 @@ Resources:
           phases:
             build:
               commands:
+                # 1. Update service count if needed
                 - CURRENT_DESIRED=$(aws ecs describe-services --cluster $ECS_CLUSTER --services $ECS_SERVICE --query 'services[0].desiredCount' --output text)
                 - if [ "$CURRENT_DESIRED" -eq 0 ]; then aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --desired-count 2; fi
+                
+                # 2. Get image URI from source artifact
                 - IMAGE_URI=$(cat imageDetail.json | jq -r '.ImageURI')
                 - echo "New image URI: $IMAGE_URI"
+                
+                # 3. Get current task definition
                 - TASK_DEFINITION_ARN=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY --query 'taskDefinition.taskDefinitionArn' --output text)
                 - echo "Current task definition: $TASK_DEFINITION_ARN"
+                
+                # 4. Create new task definition
                 - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY)
                 - NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$IMAGE_URI" '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+                
+                # 5. Register new task definition
                 - NEW_TASK_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION" --query 'taskDefinition.taskDefinitionArn' --output text)
                 - echo "New task definition ARN: $NEW_TASK_ARN"
-                - echo "version: 0.0" > appspec.yaml
-                - echo "Resources:" >> appspec.yaml
-                - echo "  - TargetService:" >> appspec.yaml
-                - echo "      Type: AWS::ECS::Service" >> appspec.yaml
-                - echo "      Properties:" >> appspec.yaml
-                - echo "        TaskDefinition: \"$NEW_TASK_ARN\"" >> appspec.yaml
-                - echo "        LoadBalancerInfo:" >> appspec.yaml
-                - echo "          ContainerName: \"$CONTAINER_NAME\"" >> appspec.yaml
-                - echo "          ContainerPort: $CONTAINER_PORT" >> appspec.yaml
+                
+                # 6. Download AppSpec template
+                - aws s3 cp s3://wk6buildsecbucket/appspec-template.yaml appspec.yaml
+                
+                # 7. Replace placeholders
+                - sed -i "s|<TASK_DEFINITION_ARN>|$NEW_TASK_ARN|g" appspec.yaml
+                - sed -i "s|<CONTAINER_NAME>|$CONTAINER_NAME|g" appspec.yaml
+                - sed -i "s|<CONTAINER_PORT>|$CONTAINER_PORT|g" appspec.yaml
+                
+                # 8. Output for debugging
                 - cat appspec.yaml
           artifacts:
             files: 
