@@ -119,29 +119,59 @@ Resources:
           phases:
             build:
               commands:
-                - echo "Checking and updating service count if needed..."
-                - 'CURRENT_DESIRED=$(aws ecs describe-services --cluster $ECS_CLUSTER --services $ECS_SERVICE --query "services[0].desiredCount" --output text)'
-                - '[ "$CURRENT_DESIRED" -eq 0 ] && aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --desired-count 2'
+                - "echo Checking and updating service count if needed…"
+                - >
+                  CURRENT_DESIRED=$(aws ecs describe-services \
+                  --cluster "$ECS_CLUSTER" \
+                  --services "$ECS_SERVICE" \
+                  --query "services[0].desiredCount" \
+                  --output text)
+                - >
+                  [ "$CURRENT_DESIRED" -eq 0 ] && \
+                  aws ecs update-service \
+                  --cluster "$ECS_CLUSTER" \
+                  --service "$ECS_SERVICE" \
+                  --desired-count 2
 
-                - 'IMAGE_URI=$(cat imageDetail.json | jq -r ".ImageURI")'
-                - echo "New image URI: $IMAGE_URI"
+                - >
+                  IMAGE_URI=$(cat imageDetail.json | jq -r ".ImageURI")
+                - "echo New image URI: $IMAGE_URI"
 
-                - 'TASK_DEFINITION_ARN=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY --query "taskDefinition.taskDefinitionArn" --output text)'
-                - echo "Current task definition: $TASK_DEFINITION_ARN"
+                - >
+                  TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
+                  --task-definition "$TASK_DEFINITION_FAMILY" \
+                  --query "taskDefinition.taskDefinitionArn" \
+                  --output text)
+                - "echo Current task definition: $TASK_DEFINITION_ARN"
 
-                - 'TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY)'
-                - 'NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$IMAGE_URI" '"'"'.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)'"'"')'
+                - >
+                  TASK_DEFINITION=$(aws ecs describe-task-definition \
+                  --task-definition "$TASK_DEFINITION_FAMILY")
+                - >
+                  NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION" |
+                    jq --arg IMAGE "$IMAGE_URI" '
+                      .taskDefinition |
+                      .containerDefinitions[0].image = $IMAGE |
+                      del(.taskDefinitionArn, .revision, .status,
+                          .requiresAttributes, .compatibilities,
+                          .registeredAt, .registeredBy)')
+                - >
+                  NEW_TASK_ARN=$(aws ecs register-task-definition \
+                  --cli-input-json "$NEW_TASK_DEFINITION" \
+                  --query "taskDefinition.taskDefinitionArn" \
+                  --output text)
+                - "echo New task definition ARN: $NEW_TASK_ARN"
 
-                - 'NEW_TASK_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION" --query "taskDefinition.taskDefinitionArn" --output text)'
-                - echo "New task definition ARN: $NEW_TASK_ARN"
+                - "aws s3 cp s3://wk6buildsecbucket/appspec-template.yaml appspec.yaml"
 
-                - 'aws s3 cp s3://wk6buildsecbucket/appspec-template.yaml appspec.yaml'
+                - >
+                  sed -i "s|<TASK_DEFINITION_ARN>|$NEW_TASK_ARN|g" appspec.yaml
+                - >
+                  sed -i "s|<CONTAINER_NAME>|$CONTAINER_NAME|g" appspec.yaml
+                - >
+                  sed -i "s|<CONTAINER_PORT>|$CONTAINER_PORT|g" appspec.yaml
 
-                - 'sed -i "s|<TASK_DEFINITION_ARN>|$NEW_TASK_ARN|g" appspec.yaml'
-                - 'sed -i "s|<CONTAINER_NAME>|$CONTAINER_NAME|g" appspec.yaml'
-                - 'sed -i "s|<CONTAINER_PORT>|$CONTAINER_PORT|g" appspec.yaml'
-
-                - cat appspec.yaml
+                - "cat appspec.yaml"
           artifacts:
             files: 
               - appspec.yaml
