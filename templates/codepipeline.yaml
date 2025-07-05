@@ -206,6 +206,13 @@ Resources:
               - Effect: Allow
                 Action: ecs:DescribeClusters
                 Resource: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${ECSClusterName}
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: arn:aws:iam::796973518232:role/ecs-task-execution-prod
+                Condition:
+                  StringLike:
+                    iam:PassedToService: "ecs-tasks.amazonaws.com"
 
 Outputs:
   PipelineName:
