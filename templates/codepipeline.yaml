@@ -186,6 +186,7 @@ Resources:
                   - ecs:UpdateService
                   - ecs:DescribeTaskDefinition
                   - ecs:RegisterTaskDefinition
+                  - s3:*
                 Resource: "*"
               - Effect: Allow
                 Action: ecs:DescribeClusters
