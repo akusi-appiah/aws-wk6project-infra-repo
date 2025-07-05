@@ -106,7 +106,23 @@ Resources:
             Value: !Ref ECSServiceName
       Source:
         Type: CODEPIPELINE
-        BuildSpec: !Sub "s3://wk6buildsecbucket/buildsec.yaml"
+        # BuildSpec: "s3://wk6buildsecbucket/buildsec.yaml"
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - CURRENT_DESIRED=$(aws ecs describe-services --cluster $ECS_CLUSTER --services $ECS_SERVICE --query 'services[0].desiredCount' --output text)
+                - |
+                  if [ "$CURRENT_DESIRED" -eq 0 ]; then
+                    echo "Updating desired count to 2"
+                    aws ecs update-service \
+                      --cluster $ECS_CLUSTER \
+                      --service $ECS_SERVICE \
+                      --desired-count 2
+                  else
+                    echo "Desired count already at $CURRENT_DESIRED"
+                  fi
 
   CodeBuildRole:
     Type: AWS::IAM::Role
