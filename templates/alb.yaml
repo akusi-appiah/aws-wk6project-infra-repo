@@ -21,7 +21,7 @@ Resources:
   BlueTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub ${ECSAppName}-blue-tg
+      Name: !Sub "${ECSAppName}-blue-tg"
       Port: !Ref ContainerPort
       Protocol: HTTP
       TargetType: ip
@@ -37,7 +37,7 @@ Resources:
   GreenTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub ${ECSAppName}-green-tg
+      Name: !Sub "${ECSAppName}-green-tg"
       Port: !Ref ContainerPort
       Protocol: HTTP
       TargetType: ip
@@ -58,7 +58,12 @@ Resources:
       Protocol: HTTP
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref BlueTargetGroup
+          ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn: !Ref BlueTargetGroup
+                Weight: 100
+              - TargetGroupArn: !Ref GreenTargetGroup
+                Weight: 0
 
 Outputs:
   ALBDnsName:
@@ -68,8 +73,8 @@ Outputs:
   GreenTargetGroupArn:
     Value: !Ref GreenTargetGroup
   BlueTargetGroupName:
-    Value: !Ref BlueTargetGroup
+    Value: !Sub "${ECSAppName}-blue-tg"
   GreenTargetGroupName:
-    Value: !Ref GreenTargetGroup
+    Value: !Sub "${ECSAppName}-green-tg"
   AlbListenerArn:
     Value: !Ref AlbListener
