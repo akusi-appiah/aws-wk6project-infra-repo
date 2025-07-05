@@ -159,10 +159,10 @@ Resources:
                   
                 # 7. Output for debugging
                 - cat appspec.yaml
-        
-        artifacts:
-          files: 
-            - appspec.yaml
+          
+          artifacts:
+            files: 
+              - appspec.yaml
 
   CodeBuildRole:
     Type: AWS::IAM::Role
