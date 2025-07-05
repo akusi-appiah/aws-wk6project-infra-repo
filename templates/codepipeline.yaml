@@ -114,52 +114,51 @@ Resources:
             Value: !Ref ContainerPort
       Source:
         Type: CODEPIPELINE
-        # BuildSpec: "s3://wk6buildsecbucket/buildsec.yaml"
         BuildSpec: |
           version: 0.2
-        phases:
-          build:
-            commands:
-              # 1. Update service count if needed
-              - CURRENT_DESIRED=$(aws ecs describe-services --cluster $ECS_CLUSTER --services $ECS_SERVICE --query 'services[0].desiredCount' --output text)
-              - |
-                if [ "$CURRENT_DESIRED" -eq 0 ]; then
-                  echo "Updating desired count to 2"
-                  aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --desired-count 2
-                fi
-              
-              # 2. Get image URI from source artifact
-              - IMAGE_URI=$(cat imageDetail.json | jq -r '.ImageURI')
-              - echo "New image URI: $IMAGE_URI"
-              
-              # 3. Get current task definition
-              - TASK_DEFINITION_ARN=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY --query 'taskDefinition.taskDefinitionArn' --output text)
-              - echo "Current task definition: $TASK_DEFINITION_ARN"
-              
-              # 4. Create new task definition
-              - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY)
-              - NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$IMAGE_URI" '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
-              
-              # 5. Register new task definition
-              - NEW_TASK_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION" --query 'taskDefinition.taskDefinitionArn' --output text)
-              - echo "New task definition ARN: $NEW_TASK_ARN"
-              
-              # 6. Generate AppSpec file
-              - |
-                cat <<EOF > appspec.yaml
-                version: 0.0
-                Resources:
-                  - TargetService:
-                      Type: AWS::ECS::Service
-                      Properties:
-                        TaskDefinition: "$NEW_TASK_ARN"
-                        LoadBalancerInfo:
-                          ContainerName: "$CONTAINER_NAME"
-                          ContainerPort: $CONTAINER_PORT
-                EOF
+          phases:
+            build:
+              commands:
+                # 1. Update service count if needed
+                - CURRENT_DESIRED=$(aws ecs describe-services --cluster $ECS_CLUSTER --services $ECS_SERVICE --query 'services[0].desiredCount' --output text)
+                - |
+                  if [ "$CURRENT_DESIRED" -eq 0 ]; then
+                    echo "Updating desired count to 2"
+                    aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --desired-count 2
+                  fi
                 
-              # 7. Output for debugging
-              - cat appspec.yaml
+                # 2. Get image URI from source artifact
+                - IMAGE_URI=$(cat imageDetail.json | jq -r '.ImageURI')
+                - echo "New image URI: $IMAGE_URI"
+                
+                # 3. Get current task definition
+                - TASK_DEFINITION_ARN=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY --query 'taskDefinition.taskDefinitionArn' --output text)
+                - echo "Current task definition: $TASK_DEFINITION_ARN"
+                
+                # 4. Create new task definition
+                - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY)
+                - NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$IMAGE_URI" '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
+                
+                # 5. Register new task definition
+                - NEW_TASK_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION" --query 'taskDefinition.taskDefinitionArn' --output text)
+                - echo "New task definition ARN: $NEW_TASK_ARN"
+                
+                # 6. Generate AppSpec file
+                - |
+                  cat <<EOF > appspec.yaml
+                  version: 0.0
+                  Resources:
+                    - TargetService:
+                        Type: AWS::ECS::Service
+                        Properties:
+                          TaskDefinition: "$NEW_TASK_ARN"
+                          LoadBalancerInfo:
+                            ContainerName: "$CONTAINER_NAME"
+                            ContainerPort: $CONTAINER_PORT
+                  EOF
+                  
+                # 7. Output for debugging
+                - cat appspec.yaml
         
         artifacts:
           files: 
