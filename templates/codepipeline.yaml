@@ -120,6 +120,7 @@ Resources:
             build:
               commands:
                 - "echo Checking and updating service count if needed…"
+                - echo "ECS_CLUSTER='$ECS_CLUSTER'   ECS_SERVICE='$ECS_SERVICE'"
                 - >
                   CURRENT_DESIRED=$(aws ecs describe-services \
                   --cluster "$ECS_CLUSTER" \
