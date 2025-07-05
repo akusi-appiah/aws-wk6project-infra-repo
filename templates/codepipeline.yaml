@@ -120,33 +120,35 @@ Resources:
             build:
               commands:
                 - "echo Checking and updating service count if needed…"
-                - echo "ECS_CLUSTER='$ECS_CLUSTER'   ECS_SERVICE='$ECS_SERVICE'"
                 - >
-                  CURRENT_DESIRED=$(aws ecs describe-services \
-                  --cluster "$ECS_CLUSTER" \
-                  --services "$ECS_SERVICE" \
-                  --query "services[0].desiredCount" \
+                  echo "ECS_CLUSTER='$ECS_CLUSTER'   ECS_SERVICE='$ECS_SERVICE'"
+                - >
+                  CURRENT_DESIRED=$(aws ecs describe-services
+                  --cluster "$ECS_CLUSTER"
+                  --services "$ECS_SERVICE"
+                  --query "services[0].desiredCount"
                   --output text)
                 - >
-                  [ "$CURRENT_DESIRED" -eq 0 ] && \
-                  aws ecs update-service \
-                  --cluster "$ECS_CLUSTER" \
-                  --service "$ECS_SERVICE" \
-                  --desired-count 2
+                  if [ "$CURRENT_DESIRED" -eq 0 ]; then
+                    aws ecs update-service
+                      --cluster "$ECS_CLUSTER"
+                      --service "$ECS_SERVICE"
+                      --desired-count 2;
+                  fi
 
                 - >
                   IMAGE_URI=$(cat imageDetail.json | jq -r ".ImageURI")
                 - "echo New image URI: $IMAGE_URI"
 
                 - >
-                  TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
-                  --task-definition "$TASK_DEFINITION_FAMILY" \
-                  --query "taskDefinition.taskDefinitionArn" \
+                  TASK_DEFINITION_ARN=$(aws ecs describe-task-definition
+                  --task-definition "$TASK_DEFINITION_FAMILY"
+                  --query "taskDefinition.taskDefinitionArn"
                   --output text)
                 - "echo Current task definition: $TASK_DEFINITION_ARN"
 
                 - >
-                  TASK_DEFINITION=$(aws ecs describe-task-definition \
+                  TASK_DEFINITION=$(aws ecs describe-task-definition
                   --task-definition "$TASK_DEFINITION_FAMILY")
                 - >
                   NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION" |
@@ -157,9 +159,9 @@ Resources:
                           .requiresAttributes, .compatibilities,
                           .registeredAt, .registeredBy)')
                 - >
-                  NEW_TASK_ARN=$(aws ecs register-task-definition \
-                  --cli-input-json "$NEW_TASK_DEFINITION" \
-                  --query "taskDefinition.taskDefinitionArn" \
+                  NEW_TASK_ARN=$(aws ecs register-task-definition
+                  --cli-input-json "$NEW_TASK_DEFINITION"
+                  --query "taskDefinition.taskDefinitionArn"
                   --output text)
                 - "echo New task definition ARN: $NEW_TASK_ARN"
 
