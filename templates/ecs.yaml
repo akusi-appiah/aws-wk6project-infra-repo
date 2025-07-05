@@ -63,6 +63,8 @@ Resources:
               Value: appdb     
             - Name: TABLE_NAME
               Value: images
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
           LogConfiguration:
             LogDriver: awslogs
             Options:

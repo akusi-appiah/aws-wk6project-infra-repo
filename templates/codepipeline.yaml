@@ -32,6 +32,7 @@ Resources:
                   - ecs:*
                   - codedeploy:*
                   - s3:*
+                  - codebuild:*
                 Resource: "*"
 
   Pipeline:
@@ -58,20 +59,18 @@ Resources:
                 - Name: SourceOutput
               RunOrder: 1
 
-        - Name: Generate-AppSpec
+        - Name: Build
           Actions:
-          - Name: Generate-AppSpec-File
+          - Name: Update-Service-Count
             ActionTypeId:
               Category: Build
               Owner: AWS
               Provider: CodeBuild
               Version: '1'
             Configuration:
-              ProjectName: !Ref AppSpecGenerator
+              ProjectName: !Ref ServiceUpdateBuilder
             InputArtifacts:
               - Name: SourceOutput
-            OutputArtifacts:
-              - Name: BuildOutput
             RunOrder: 1
 
         - Name: Deploy
@@ -86,13 +85,13 @@ Resources:
                 ApplicationName: !Ref CodeDeployApplication
                 DeploymentGroupName: !Sub ${ECSAppName}-dg
               InputArtifacts:
-                - Name: BuildOutput
+                - Name: SourceOutput
               RunOrder: 1
 
-  AppSpecGenerator:
+  ServiceUpdateBuilder:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub ${ECSAppName}-appspec-generator
+      Name: !Sub ${ECSAppName}-service-updater
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -101,12 +100,6 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/amazonlinux2-x86_64-standard:4.0
         EnvironmentVariables:
-          - Name: TASK_DEFINITION_ARN
-            Value: !Ref TaskDefinitionArn
-          - Name: CONTAINER_NAME
-            Value: !Ref ContainerName
-          - Name: CONTAINER_PORT
-            Value: !Ref ContainerPort
           - Name: ECS_CLUSTER
             Value: !Ref ECSClusterName
           - Name: ECS_SERVICE
@@ -138,7 +131,7 @@ Resources:
                   - ecs:UpdateService
                 Resource: "*"
               - Effect: Allow
-                Action: ecs:DescribeServices
+                Action: ecs:DescribeClusters
                 Resource: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${ECSClusterName}
               - Effect: Allow
                 Action: ecs:UpdateService

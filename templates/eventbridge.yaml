@@ -14,7 +14,8 @@ Resources:
         detail:
           action-type: ["PUSH"]
           result: ["SUCCESS"]
-          repository-name: [!Select [1, !Split ['/', !Select [5, !Split [':', !Ref ECRRepoArn]]]]] 
+          repository-name: 
+            - !Select [1, !Split ['/', !Select [5, !Split [':', !Ref ECRRepoArn]]]] 
           image-tag: ["latest"] 
 
       Targets:
