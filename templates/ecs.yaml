@@ -47,6 +47,14 @@ Resources:
         - Name: !Ref ContainerName
           Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:latest
           Essential: true
+          HealthCheck:
+            Command:
+              - CMD-SHELL
+              - curl -f http://localhost:3000/health || exit 1
+            Interval: 30
+            Timeout: 30
+            Retries: 3
+            StartPeriod: 60
           PortMappings:
             - ContainerPort: !Ref ContainerPort
               Protocol: tcp
@@ -89,6 +97,7 @@ Resources:
           Subnets: !Ref PrivateSubnetIds
           SecurityGroups: [!Ref TaskSecurityGroup]
           AssignPublicIp: DISABLED
+      HealthCheckGracePeriodSeconds: 60
       LoadBalancers:
         - ContainerName: !Ref ContainerName
           ContainerPort: !Ref ContainerPort
