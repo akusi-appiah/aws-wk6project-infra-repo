@@ -54,3 +54,5 @@ Outputs:
     Value: !GetAtt DBInstance.Endpoint.Address
   DBSecretArn:
     Value: !Ref DBSecret
+  DBSecretName:
+    Value: !Sub ${EnvironmentName}/rds/credentials

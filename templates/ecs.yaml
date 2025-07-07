@@ -10,6 +10,7 @@ Parameters:
   S3BucketName: { Type: String }
   DBEndpoint: { Type: String }
   DBSecretArn: { Type: String }
+  DBSecretName: { Type: String }
   BlueTargetGroupArn: { Type: String }
   ContainerName:
     Type: String
@@ -47,14 +48,6 @@ Resources:
         - Name: !Ref ContainerName
           Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:latest
           Essential: true
-          HealthCheck:
-            Command:
-              - CMD-SHELL
-              - curl -f http://localhost:3000/health || exit 1
-            Interval: 30
-            Timeout: 30
-            Retries: 3
-            StartPeriod: 60
           PortMappings:
             - ContainerPort: !Ref ContainerPort
               Protocol: tcp
@@ -65,6 +58,8 @@ Resources:
               Value: !Ref DBEndpoint
             - Name: DB_SECRET_ARN
               Value: !Ref DBSecretArn
+            - Name: DB_SECRET_NAME
+              Value: !Ref DBSecretName
             - Name: S3_REGION
               Value: !Ref AWS::Region
             - Name: DB_NAME
@@ -73,6 +68,8 @@ Resources:
               Value: images
             - Name: AWS_REGION
               Value: !Ref AWS::Region
+            - Name: DB_PORT
+              Value: '5432'
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -80,6 +77,14 @@ Resources:
               awslogs-group: !Ref AppLogGroup
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
+          HealthCheck:
+            Command:
+              - CMD-SHELL
+              - curl -f http://localhost:3000/health || exit 1
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 30
 
   ECSService:
     Type: AWS::ECS::Service
@@ -97,11 +102,11 @@ Resources:
           Subnets: !Ref PrivateSubnetIds
           SecurityGroups: [!Ref TaskSecurityGroup]
           AssignPublicIp: DISABLED
-      HealthCheckGracePeriodSeconds: 60
       LoadBalancers:
         - ContainerName: !Ref ContainerName
           ContainerPort: !Ref ContainerPort
           TargetGroupArn: !Ref BlueTargetGroupArn
+      HealthCheckGracePeriodSeconds: 30
 
   AppLogGroup:
     Type: AWS::Logs::LogGroup

@@ -130,6 +130,7 @@ Resources:
         S3BucketName: !GetAtt S3Stack.Outputs.S3BucketName
         DBEndpoint: !GetAtt RDSStack.Outputs.DBEndpoint
         DBSecretArn: !GetAtt RDSStack.Outputs.DBSecretArn
+        DBSecretName: !GetAtt RDSStack.Outputs.DBSecretName
         BlueTargetGroupArn: !GetAtt ALBStack.Outputs.BlueTargetGroupArn
 
   CodeDeployStack:
